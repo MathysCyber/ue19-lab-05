@@ -1,4 +1,4 @@
-name: docker build
+name: build scan push
 
 on:
   push:
@@ -22,15 +22,25 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set repo to lowercase
+      
+      - name: fix name
         id: lowercaserepo
         run: echo "repo=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
           
-      - name: build and push
+      - name: build
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
-          # UTILISE LE NOUVEAU NOM en minuscules
+          load: true
+          push: false
           tags: ghcr.io/${{ steps.lowercaserepo.outputs.repo }}:latest
+
+      - name: scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'ghcr.io/${{ steps.lowercaserepo.outputs.repo }}:latest'
+          format: 'table'
+          exit-code: '0'
+          
+      - name: push
+        run: docker push ghcr.io/${{ steps.lowercaserepo.outputs.repo }}:latest
