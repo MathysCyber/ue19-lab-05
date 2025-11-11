@@ -22,10 +22,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set repo to lowercase
+        id: lowercaserepo
+        run: echo "repo=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
           
       - name: build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest
+          # UTILISE LE NOUVEAU NOM en minuscules
+          tags: ghcr.io/${{ steps.lowercaserepo.outputs.repo }}:latest
